@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Greenhouse Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+</head>
+<body>
+    <aside class="glass sidebar">
+        <h2><i class="fa-solid fa-leaf"></i> Greenhouse</h2>
+        <div class="plant-list">
+            <div class="plant-item active" onclick="selectPlant('tomato')">Канабіс</div>
+            <div class="plant-item" onclick="selectPlant('cucumber')">Марівана</div>
+            <div class="plant-item" onclick="selectPlant('succulent')">Кокос</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="glass viewer-container">
+            <h1 id="current-plant-name">Канабіс</h1>
+            <model-viewer src="plant.glb" auto-rotate camera-controls rotation-per-second="30deg"></model-viewer>
+            <div id="status-badge" class="status-badge">Завантаження даних...</div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="glass metric-card">
+                <div class="metric-label">Температура</div>
+                <div class="metric-value"><span id="val-temp">--</span>°C</div>
+            </div>
+            <div class="glass metric-card">
+                <div class="metric-label">Вологість пов.</div>
+                <div class="metric-value"><span id="val-hum">--</span>%</div>
+            </div>
+            <div class="glass metric-card">
+                <div class="metric-label">Вологість ґрунту</div>
+                <div class="metric-value"><span id="val-soil">--</span>%</div>
+            </div>
+        </div>
+    </main>
+
+    <aside class="glass controls-panel">
+        <h2>Керування</h2>
+        <p class="subtitle">Сектор А</p>
+        
+        <div class="controls-grid">
+            <button class="control-btn" id="btn-fan" onclick="toggleDevice('fan')">
+                <i class="fa-solid fa-fan"></i>
+                <span>Вентиляція</span>
+            </button>
+            <button class="control-btn" id="btn-pump" onclick="toggleDevice('pump')">
+                <i class="fa-solid fa-droplet"></i>
+                <span>Полив</span>
+            </button>
+            <button class="control-btn" id="btn-light" onclick="toggleDevice('light')">
+                <i class="fa-solid fa-lightbulb"></i>
+                <span>Освітлення</span>
+            </button>
+        </div>
+    </aside>
+
+    <script src="script.js"></script>
+</body>
+</html>
