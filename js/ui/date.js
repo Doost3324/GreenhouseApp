@@ -1,23 +1,18 @@
 /**
- * Ukrainian date display for the header.
+ * Дата в шапці та годинник у футері.
  */
-
 const UKRAINIAN_MONTHS = [
     'Січня', 'Лютого', 'Березня', 'Квітня', 'Травня', 'Червня',
     'Липня', 'Серпня', 'Вересня', 'Жовтня', 'Листопада', 'Грудня'
 ];
 
 export function formatUkrainianDate(date = new Date()) {
-    const day = date.getDate();
-    const month = UKRAINIAN_MONTHS[date.getMonth()];
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
+    return `${date.getDate()} ${UKRAINIAN_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-export function renderCurrentDate() {
+function renderCurrentDate() {
     const el = document.getElementById('current-date');
     if (!el) return;
-
     const now = new Date();
     el.textContent = formatUkrainianDate(now);
     el.setAttribute('datetime', now.toISOString().slice(0, 10));

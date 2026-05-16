@@ -154,6 +154,51 @@
     overflow: hidden;
 }
 
+.rain-streaks {
+    position: absolute;
+    inset: 22% 6% 10%;
+    z-index: 3;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.rain-streak {
+    position: absolute;
+    top: var(--start-y, 0%);
+    left: var(--x, 50%);
+    width: 2px;
+    height: var(--len, 18px);
+    margin-left: -1px;
+    border-radius: 2px;
+    background: linear-gradient(
+        180deg,
+        rgba(144, 202, 249, 0) 0%,
+        rgba(100, 181, 246, var(--alpha, 0.65)) 40%,
+        rgba(66, 165, 245, var(--alpha, 0.5)) 100%
+    );
+    opacity: 0;
+    animation: rainStreakFall var(--duration, 0.5s) linear var(--delay, 0s) infinite;
+    animation-play-state: paused;
+}
+
+.greenhouse-container.is-watering .rain-streak {
+    animation-play-state: running;
+}
+
+@keyframes rainStreakFall {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+    6% {
+        opacity: var(--alpha, 0.7);
+    }
+    100% {
+        transform: translateY(280px);
+        opacity: 0;
+    }
+}
+
 .sprinkle-particle {
     position: absolute;
     top: var(--start-y, 0%);
@@ -162,10 +207,10 @@
     height: var(--size, 4px);
     margin-left: calc(var(--size, 4px) / -2);
     border-radius: 50%;
-    background: rgba(100, 181, 246, var(--alpha, 0.55));
-    box-shadow: 0 0 4px rgba(100, 181, 246, 0.4);
+    background: rgba(100, 181, 246, var(--alpha, 0.65));
+    box-shadow: 0 0 6px rgba(100, 181, 246, 0.55);
     opacity: 0;
-    animation: particleFall var(--duration, 1.2s) var(--ease-out) var(--delay, 0s) infinite;
+    animation: particleFall var(--duration, 0.75s) linear var(--delay, 0s) infinite;
     animation-play-state: paused;
 }
 
@@ -175,33 +220,33 @@
 
 @keyframes particleFall {
     0% {
-        transform: translate(0, 0) scale(0.4);
+        transform: translate(0, 0) scale(0.5);
         opacity: 0;
     }
-    8% {
-        opacity: var(--alpha, 0.6);
+    5% {
+        opacity: var(--alpha, 0.75);
     }
-    70% {
-        opacity: 0.35;
+    85% {
+        opacity: 0.45;
     }
     100% {
-        transform: translate(var(--drift, 0px), 220px) scale(0.9);
+        transform: translate(var(--drift, 0px), 260px) scale(1);
         opacity: 0;
     }
 }
 
 .soil-mist {
     position: absolute;
-    bottom: 10%;
+    bottom: 8%;
     left: 50%;
-    width: 62%;
-    height: 24%;
-    margin-left: -35%;
+    width: 72%;
+    height: 30%;
+    margin-left: -36%;
     background: radial-gradient(
         ellipse at center bottom,
-        rgba(100, 181, 246, 0.22) 0%,
-        rgba(100, 181, 246, 0.08) 40%,
-        transparent 72%
+        rgba(100, 181, 246, 0.38) 0%,
+        rgba(100, 181, 246, 0.16) 45%,
+        transparent 75%
     );
     opacity: 0;
     animation: soilMist 2.5s ease-in-out infinite;

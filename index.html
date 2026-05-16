@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Розумна теплиця — Мікроферма</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/main.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.172.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.172.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
     <div class="ambient" aria-hidden="true">
@@ -49,7 +57,7 @@
 
             <div class="top-bar__tags">
                 <time id="current-date" class="tag tag-date" datetime=""></time>
-                <span class="tag tag-plant" id="plant-name">Рослина: Кокос</span>
+                <span class="tag tag-plant" id="plant-name">Рослина: Сукулент</span>
                 <span class="tag tag-status status-optimal" id="plant-status">Стан: Оптимальні умови</span>
             </div>
         </header>
@@ -63,6 +71,11 @@
                         <div class="greenhouse-stage">
                             <img src="box.png" alt="3D модель теплиці" class="greenhouse-image" width="1254" height="1254">
 
+                            <div class="plant-slot" id="plant-slot" aria-label="Рослина в горщику — обертайте мишею">
+                                <p class="plant-hint" aria-hidden="true">⟲ тягніть для обертання</p>
+                                <canvas id="plant-canvas"></canvas>
+                            </div>
+
                             <div class="fx-layer fx-light" aria-hidden="true"></div>
                             <div class="fx-layer fx-wind" aria-hidden="true">
                                 <span class="wind-swoosh wind-swoosh--1"></span>
@@ -72,6 +85,7 @@
 
                             <div class="fx-layer fx-water" id="watering-layer" aria-hidden="true">
                                 <div class="sprinkler-head"></div>
+                                <div class="rain-streaks" id="rain-streaks" aria-hidden="true"></div>
                                 <div class="sprinkler-particles" id="sprinkler-particles"></div>
                                 <div class="soil-mist"></div>
                             </div>
@@ -87,8 +101,13 @@
                                 <span class="live-dot" aria-hidden="true"></span>
                             </div>
                             <div class="sensor-badge sensor-soil" aria-label="Вологість ґрунту">
-                                <span class="sensor-emoji" aria-hidden="true">💧</span>
+                                <span class="sensor-emoji" aria-hidden="true">🪴</span>
                                 <span class="sensor-value" id="sensor-soil-value">45%</span>
+                                <span class="live-dot" aria-hidden="true"></span>
+                            </div>
+                            <div class="sensor-badge sensor-air" aria-label="Вологість повітря">
+                                <span class="sensor-emoji" aria-hidden="true">🌫️</span>
+                                <span class="sensor-value" id="sensor-air-value">62%</span>
                                 <span class="live-dot" aria-hidden="true"></span>
                             </div>
                         </div>
@@ -149,6 +168,13 @@
                             <span class="stat-chip__value" id="stat-soil-hum">45%</span>
                         </div>
                     </article>
+                    <article class="stat-chip card-elevated">
+                        <span class="stat-chip__icon" aria-hidden="true">☀️</span>
+                        <div class="stat-chip__body">
+                            <span class="stat-chip__label">Освітленість</span>
+                            <span class="stat-chip__value" id="stat-light">85%</span>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -158,15 +184,44 @@
                 <header class="analytics-header">
                     <p class="section-label">Аналітика</p>
                     <h2 class="panel-title panel-title--compact">Історія показників</h2>
-                    <p class="analytics-subtitle">Температура та вологість повітря за останні 24 години</p>
+                    <p class="analytics-subtitle">Окремі графіки за 24 год · джерело історії: <code>data/mock-history.json</code></p>
                 </header>
-                <div class="chart-wrapper">
-                    <canvas id="analyticsChart" aria-label="Графік температури та вологості"></canvas>
+                <div class="analytics-toolbar">
+                    <button type="button" class="btn-chart-mode" id="btn-chart-overlay" aria-pressed="false">
+                        Показати разом (нашарування)
+                    </button>
+                    <span class="analytics-note">Живі дані — <code>data/live.txt</code></span>
                 </div>
-                <button type="button" class="btn-download" id="btn-download-report">
-                    <span class="btn-download__icon" aria-hidden="true">📄</span>
-                    Завантажити звіт (PDF)
-                </button>
+                <div class="analytics-split" id="analytics-split">
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">🌡️ Температура</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-temp"></canvas></div>
+                    </article>
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">🌫️ Вологість повітря</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-humidity"></canvas></div>
+                    </article>
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">🪴 Вологість ґрунту</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-soil"></canvas></div>
+                    </article>
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">☀️ Освітленість</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-light"></canvas></div>
+                    </article>
+                </div>
+                <div class="analytics-overlay is-hidden" id="analytics-overlay">
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">Усі показники разом</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-combined"></canvas></div>
+                    </article>
+                </div>
+                <footer class="analytics-footer">
+                    <button type="button" class="btn-download" id="btn-download-report">
+                        <span class="btn-download__icon" aria-hidden="true">📄</span>
+                        Завантажити звіт (PDF)
+                    </button>
+                </footer>
             </div>
         </section>
 

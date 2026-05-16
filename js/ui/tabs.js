@@ -1,7 +1,6 @@
 /**
- * SPA tab switching — Моніторинг / Аналітика.
+ * Перемикання вкладок: Моніторинг / Аналітика.
  */
-
 export function initTabs({ onAnalyticsShow, onMonitoringShow } = {}) {
     const buttons = document.querySelectorAll('.tab-btn');
     const panels = {
@@ -15,22 +14,19 @@ export function initTabs({ onAnalyticsShow, onMonitoringShow } = {}) {
             if (!tab || !panels[tab]) return;
 
             buttons.forEach((b) => {
-                const isActive = b === btn;
-                b.classList.toggle('active', isActive);
-                b.setAttribute('aria-selected', String(isActive));
+                const active = b === btn;
+                b.classList.toggle('active', active);
+                b.setAttribute('aria-selected', String(active));
             });
 
             Object.entries(panels).forEach(([key, panel]) => {
-                const isActive = key === tab;
-                panel.classList.toggle('active', isActive);
-                panel.hidden = !isActive;
+                const active = key === tab;
+                panel.classList.toggle('active', active);
+                panel.hidden = !active;
             });
 
-            if (tab === 'analytics') {
-                onAnalyticsShow?.();
-            } else if (tab === 'monitoring') {
-                onMonitoringShow?.();
-            }
+            if (tab === 'analytics') onAnalyticsShow?.();
+            else if (tab === 'monitoring') onMonitoringShow?.();
         });
     });
 }

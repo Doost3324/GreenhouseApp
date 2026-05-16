@@ -328,9 +328,9 @@
 .stats-strip {
     grid-area: stats;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
-    max-height: 68px;
+    max-height: 72px;
     min-height: 0;
 }
 
@@ -371,70 +371,12 @@
 }
 
 .stat-chip__value {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     letter-spacing: -0.03em;
     color: var(--color-text);
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
-}
-
-/* ─── Analytics ─── */
-.analytics-panel {
-    flex: 1;
-    margin: 10px clamp(12px, 2vw, 20px);
-    padding: 24px 28px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-}
-
-.analytics-subtitle {
-    margin: 2px 0 0;
-    font-size: 13px;
-    color: var(--color-text-secondary);
-}
-
-.chart-wrapper {
-    flex: 1;
-    min-height: 200px;
-    margin: 16px 0;
-    position: relative;
-}
-
-#analyticsChart {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-.btn-download {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 20px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text);
-    background: linear-gradient(180deg, #fff 0%, #f5f5f7 100%);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 14px;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-}
-
-.btn-download:hover:not(:disabled) {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.btn-download:disabled {
-    opacity: 0.65;
-    cursor: wait;
-}
-
-.btn-download__icon {
-    font-size: 16px;
 }
 
 /* ─── Footer ─── */
@@ -487,7 +429,7 @@
 
     .stats-strip {
         max-height: none;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .stat-chip {

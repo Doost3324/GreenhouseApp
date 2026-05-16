@@ -1,4 +1,5 @@
 #Ignore these
+.tools/
 
 #ESP32
 life_changing.txt
