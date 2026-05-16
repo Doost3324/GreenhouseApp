@@ -41,13 +41,11 @@ def update_data():
         except FileNotFoundError:
             pass
 
-        #new data[temp/humidity]
         if 'temp' in incoming_data:
             existing_data['temp'] = str(incoming_data['temp'])
         if 'humidity' in incoming_data:
             existing_data['humidity'] = str(incoming_data['humidity'])
 
-        #write out
         with open('data.txt', 'w', encoding='utf-8') as f:
             for key, value in existing_data.items():
                 f.write(f"{key}={value}\n")
