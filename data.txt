@@ -1,4 +1,4 @@
 temp=25
-humidity=66
+humidity=93
 soil_moisture=45
 light=850
