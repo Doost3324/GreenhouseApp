@@ -2,7 +2,7 @@ import { CONFIG } from '../core/config.js';
 
 let cachedHistory = null;
 
-/** Тестова історія з data/mock-history.json */
+/** Історія показників для графіків (JSON на сервері). */
 export async function loadMockHistory() {
     if (cachedHistory) return cachedHistory;
 

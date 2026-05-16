@@ -1,6 +1,7 @@
 /**
  * Точка входу застосунку Greenhouse.
  */
+import { initTheme } from './ui/theme.js';
 import { initDate } from './ui/date.js';
 import { initTabs } from './ui/tabs.js';
 import { initControls } from './ui/controls.js';
@@ -12,6 +13,7 @@ import { startMetricsPolling } from './api/metrics.js';
 import { updateSensors } from './core/sensors.js';
 
 function bootstrap() {
+    initTheme();
     initEffects();
     initDate();
     initGreenhouse();

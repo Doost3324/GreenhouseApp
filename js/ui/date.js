@@ -10,6 +10,14 @@ export function formatUkrainianDate(date = new Date()) {
     return `${date.getDate()} ${UKRAINIAN_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+export function formatReportDateTime(date = new Date()) {
+    const time = date.toLocaleTimeString('uk-UA', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    return `${formatUkrainianDate(date)}, ${time}`;
+}
+
 function renderCurrentDate() {
     const el = document.getElementById('current-date');
     if (!el) return;

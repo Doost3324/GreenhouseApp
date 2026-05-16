@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Розумна теплиця — Мікроферма</title>
+    <title>Greenhouse App</title>
+    <link rel="icon" type="image/png" href="greenhouse-svgrepo-com.png">
+    <script>
+        try {
+            if (localStorage.getItem('greenhouse-theme') === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        } catch (e) { /* noop */ }
+    </script>
     <link rel="stylesheet" href="css/main.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -28,20 +36,10 @@
         <header class="top-bar">
             <div class="brand">
                 <div class="brand__mark">
-                    <svg class="brand__icon" width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M12 2C12 2 6 8.5 6 13.5C6 16.5 8.5 19 12 19C15.5 19 18 16.5 18 13.5C18 8.5 12 2 12 2Z" fill="url(#leafGrad)"/>
-                        <path d="M12 19V22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M9 22H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <defs>
-                            <linearGradient id="leafGrad" x1="12" y1="2" x2="12" y2="19" gradientUnits="userSpaceOnUse">
-                                <stop stop-color="#34D058"/>
-                                <stop offset="1" stop-color="#00C853"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
+                    <img src="greenhouse-svgrepo-com.png" alt="" class="brand__icon" width="36" height="36">
                 </div>
                 <div class="brand__text">
-                    <span class="brand__name">Greenhouse</span>
+                    <span class="brand__name">Greenhouse App</span>
                     <span class="brand__tagline">Розумна мікроферма</span>
                 </div>
                 <span class="live-pill" id="live-indicator">
@@ -69,7 +67,7 @@
                     <div class="greenhouse-container" id="greenhouse-container">
                         <div class="greenhouse-backdrop" aria-hidden="true"></div>
                         <div class="greenhouse-stage">
-                            <img src="box.png" alt="3D модель теплиці" class="greenhouse-image" width="1254" height="1254">
+                            <img src="box.png" alt="" class="greenhouse-box greenhouse-box--back" width="1254" height="1254" aria-hidden="true">
 
                             <div class="plant-slot" id="plant-slot" aria-label="Рослина в горщику — обертайте мишею">
                                 <p class="plant-hint" aria-hidden="true">⟲ тягніть для обертання</p>
@@ -101,7 +99,7 @@
                                 <span class="live-dot" aria-hidden="true"></span>
                             </div>
                             <div class="sensor-badge sensor-soil" aria-label="Вологість ґрунту">
-                                <span class="sensor-emoji" aria-hidden="true">🪴</span>
+                                <span class="sensor-emoji" aria-hidden="true">💧</span>
                                 <span class="sensor-value" id="sensor-soil-value">45%</span>
                                 <span class="live-dot" aria-hidden="true"></span>
                             </div>
@@ -110,6 +108,8 @@
                                 <span class="sensor-value" id="sensor-air-value">62%</span>
                                 <span class="live-dot" aria-hidden="true"></span>
                             </div>
+
+                            <img src="box_lower.png" alt="" class="greenhouse-box greenhouse-box--front" width="1254" height="1254" aria-hidden="true">
                         </div>
                     </div>
                 </div>
@@ -184,13 +184,12 @@
                 <header class="analytics-header">
                     <p class="section-label">Аналітика</p>
                     <h2 class="panel-title panel-title--compact">Історія показників</h2>
-                    <p class="analytics-subtitle">Окремі графіки за 24 год · джерело історії: <code>data/mock-history.json</code></p>
+                    <p class="analytics-subtitle">Окремі графіки за останні 24 години</p>
                 </header>
                 <div class="analytics-toolbar">
                     <button type="button" class="btn-chart-mode" id="btn-chart-overlay" aria-pressed="false">
                         Показати разом (нашарування)
                     </button>
-                    <span class="analytics-note">Живі дані — <code>data/live.txt</code></span>
                 </div>
                 <div class="analytics-split" id="analytics-split">
                     <article class="chart-card">
@@ -202,7 +201,7 @@
                         <div class="chart-card__canvas"><canvas id="chart-humidity"></canvas></div>
                     </article>
                     <article class="chart-card">
-                        <h3 class="chart-card__title">🪴 Вологість ґрунту</h3>
+                        <h3 class="chart-card__title">💧 Вологість ґрунту</h3>
                         <div class="chart-card__canvas"><canvas id="chart-soil"></canvas></div>
                     </article>
                     <article class="chart-card">
@@ -226,9 +225,11 @@
         </section>
 
         <footer class="app-footer">
-            <span>Greenhousev1.0</span>
+            <span>Greenhouse v1.0</span>
             <span class="app-footer__sep">·</span>
             <span id="footer-clock"></span>
+            <span class="app-footer__sep">·</span>
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-pressed="false"></button>
         </footer>
     </main>
 

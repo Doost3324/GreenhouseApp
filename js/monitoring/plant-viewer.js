@@ -94,7 +94,7 @@ function onVisibility() {
     }
     const tick = () => {
         if (!dragging && plantRoot) {
-            rotY += 0.0012;
+            rotY += 0.0035;
             applyOrbit();
             render();
         }

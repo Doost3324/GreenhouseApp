@@ -2,6 +2,7 @@
  * Аналітика: окремі графіки + режим нашарування.
  */
 import { loadMockHistory } from '../data/history.js';
+import { getChartTheme, buildGradient, hexToRgba } from './chart-theme.js';
 
 const CHART_IDS = {
     temp: 'chart-temp',
@@ -16,30 +17,26 @@ const SERIES = {
         id: CHART_IDS.temp,
         label: 'Температура (°C)',
         color: '#ef5350',
-        fill: 'rgba(239, 83, 80, 0.1)',
         yAxis: 'yTemp'
     },
     humidity: {
         id: CHART_IDS.humidity,
         label: 'Вологість повітря (%)',
-        color: '#42a5f5',
-        fill: 'rgba(66, 165, 245, 0.1)',
+        color: '#29b6f6',
         yAxis: 'yPct',
         max: 100
     },
     soilMoisture: {
         id: CHART_IDS.soil,
         label: 'Вологість ґрунту (%)',
-        color: '#8d6e63',
-        fill: 'rgba(141, 110, 99, 0.12)',
+        color: '#66bb6a',
         yAxis: 'yPct',
         max: 100
     },
     light: {
         id: CHART_IDS.light,
         label: 'Освітленість (%)',
-        color: '#ffb300',
-        fill: 'rgba(255, 179, 0, 0.12)',
+        color: '#ffa726',
         yAxis: 'yPct',
         max: 100
     }
@@ -49,12 +46,25 @@ const charts = {};
 let historyData = null;
 let overlayMode = false;
 
-function baseOptions(yLabel, yMax) {
+function themedScales(theme, yLabel, yMax, extra = {}) {
     const yScale = {
-        grid: { color: 'rgba(0,0,0,0.04)' },
-        ticks: { font: { size: 10 } }
+        grid: { color: theme.grid, drawBorder: false },
+        border: { display: false },
+        ticks: {
+            font: { size: 10, family: theme.font },
+            color: theme.text,
+            padding: 6
+        },
+        ...extra
     };
-    if (yLabel) yScale.title = { display: true, text: yLabel, color: '#6e6e73', font: { size: 10 } };
+    if (yLabel) {
+        yScale.title = {
+            display: true,
+            text: yLabel,
+            color: theme.text,
+            font: { size: 10, weight: '600' }
+        };
+    }
     if (yMax != null) {
         yScale.min = 0;
         yScale.max = yMax;
@@ -65,32 +75,50 @@ function baseOptions(yLabel, yMax) {
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: theme.isDark ? '#1e2420' : '#fff',
+                titleColor: theme.isDark ? '#f2f2f7' : '#1d1d1f',
+                bodyColor: theme.text,
+                borderColor: theme.border,
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 10,
+                displayColors: true
+            }
         },
         scales: {
             x: {
-                grid: { color: 'rgba(0,0,0,0.04)' },
-                ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }
+                grid: { display: false },
+                border: { display: false },
+                ticks: {
+                    font: { size: 10, family: theme.font },
+                    color: theme.textMuted,
+                    maxRotation: 0,
+                    autoSkip: true,
+                    maxTicksLimit: 7
+                }
             },
             y: yScale
         }
     };
 }
 
-function makeDataset(key, data, opts = {}) {
+function makeDataset(key, data) {
     const meta = SERIES[key];
     return {
         label: meta.label,
         data,
         borderColor: meta.color,
-        backgroundColor: meta.fill,
-        borderWidth: 2,
-        tension: 0.38,
+        backgroundColor: (ctx) => buildGradient(ctx.chart.ctx, meta.color, ctx.chart.chartArea),
+        borderWidth: 2.5,
+        tension: 0.42,
         fill: true,
         pointRadius: 0,
-        pointHoverRadius: 4,
-        yAxisID: opts.yAxisID || 'y',
-        ...opts.extra
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: meta.color,
+        pointHoverBorderColor: '#fff',
+        pointHoverBorderWidth: 2
     };
 }
 
@@ -99,15 +127,16 @@ function createSingleChart(canvasId, key, values) {
     if (!canvas || typeof Chart === 'undefined') return null;
 
     const meta = SERIES[key];
+    const theme = getChartTheme();
     const yLabel = meta.yAxis === 'yPct' ? '%' : '°C';
 
     return new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: historyData.labels,
-            datasets: [makeDataset(key, values)]
+            datasets: [{ ...makeDataset(key, values), yAxisID: 'y' }]
         },
-        options: baseOptions(yLabel, meta.max)
+        options: themedScales(theme, yLabel, meta.max)
     });
 }
 
@@ -115,15 +144,32 @@ function createCombinedChart() {
     const canvas = document.getElementById(CHART_IDS.combined);
     if (!canvas || typeof Chart === 'undefined') return null;
 
+    const theme = getChartTheme();
+
     return new Chart(canvas.getContext('2d'), {
         type: 'line',
         data: {
             labels: historyData.labels,
             datasets: [
-                { ...makeDataset('temperature', historyData.temperature, { extra: { yAxisID: 'yTemp' } }) },
-                { ...makeDataset('humidity', historyData.humidity, { extra: { yAxisID: 'yPct', borderWidth: 1.5 } }) },
-                { ...makeDataset('soilMoisture', historyData.soilMoisture, { extra: { yAxisID: 'yPct', borderWidth: 1.5 } }) },
-                { ...makeDataset('light', historyData.light, { extra: { yAxisID: 'yPct', borderWidth: 1.5 } }) }
+                { ...makeDataset('temperature', historyData.temperature), yAxisID: 'yTemp', borderWidth: 2.5 },
+                {
+                    ...makeDataset('humidity', historyData.humidity),
+                    yAxisID: 'yPct',
+                    borderWidth: 2,
+                    borderColor: SERIES.humidity.color
+                },
+                {
+                    ...makeDataset('soilMoisture', historyData.soilMoisture),
+                    yAxisID: 'yPct',
+                    borderWidth: 2,
+                    borderColor: SERIES.soilMoisture.color
+                },
+                {
+                    ...makeDataset('light', historyData.light),
+                    yAxisID: 'yPct',
+                    borderWidth: 2,
+                    borderColor: SERIES.light.color
+                }
             ]
         },
         options: {
@@ -132,28 +178,35 @@ function createCombinedChart() {
             interaction: { mode: 'index', intersect: false },
             plugins: {
                 legend: {
+                    display: true,
                     position: 'top',
-                    labels: { font: { size: 11 }, boxWidth: 12, padding: 14 }
-                }
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { size: 11, family: theme.font },
+                        color: theme.text,
+                        padding: 16
+                    }
+                },
+                tooltip: themedScales(theme).plugins.tooltip
             },
             scales: {
-                x: {
-                    grid: { color: 'rgba(0,0,0,0.04)' },
-                    ticks: { font: { size: 10 }, maxTicksLimit: 10 }
-                },
+                x: themedScales(theme).scales.x,
                 yTemp: {
-                    type: 'linear',
                     position: 'left',
-                    title: { display: true, text: '°C', color: '#ef5350' },
-                    grid: { color: 'rgba(0,0,0,0.05)' }
+                    grid: { color: theme.grid, drawBorder: false },
+                    border: { display: false },
+                    ticks: { color: hexToRgba(SERIES.temperature.color, 0.9), font: { size: 10 } },
+                    title: { display: true, text: '°C', color: SERIES.temperature.color, font: { size: 10, weight: '600' } }
                 },
                 yPct: {
-                    type: 'linear',
                     position: 'right',
                     min: 0,
                     max: 100,
-                    title: { display: true, text: '%', color: '#6e6e73' },
-                    grid: { drawOnChartArea: false }
+                    grid: { drawOnChartArea: false },
+                    border: { display: false },
+                    ticks: { color: theme.text, font: { size: 10 } },
+                    title: { display: true, text: '%', color: theme.text, font: { size: 10, weight: '600' } }
                 }
             }
         }

@@ -1,3 +1,6 @@
+/**
+ * Опитування /api/data та оновлення показників на екрані.
+ */
 import { CONFIG } from '../core/config.js';
 import { parseLivePayload, updateSensors, updateLastSync } from '../core/sensors.js';
 

@@ -31,7 +31,7 @@ export function initGreenhouse() {
     updateSensors(d.temp, d.humidity, d.soilMoisture, Math.round((d.lightLux / CONFIG.lightLuxMax) * 100));
     updateLastSync();
 
-    document.querySelector('.greenhouse-image')?.addEventListener('load', fitGreenhouseStage);
+    document.querySelector('.greenhouse-box--back')?.addEventListener('load', fitGreenhouseStage);
     fitGreenhouseStage();
     window.addEventListener('resize', fitGreenhouseStage);
 
