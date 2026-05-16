@@ -1,1 +1,1 @@
-fan=on
+light=off
