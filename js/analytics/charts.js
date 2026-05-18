@@ -1,7 +1,6 @@
 /**
- * Аналітика: окремі графіки + режим нашарування.
+ * Аналітика: окремі графіки + режим нашарування (ДАНІ З БД).
  */
-import { loadMockHistory } from '../data/history.js';
 import { getChartTheme, buildGradient, hexToRgba } from './chart-theme.js';
 
 const CHART_IDS = {
@@ -45,6 +44,21 @@ const SERIES = {
 const charts = {};
 let historyData = null;
 let overlayMode = false;
+
+// НОВА ФУНКЦІЯ: Завантаження реальної історії з БД
+async function loadRealHistory() {
+    try {
+        const response = await fetch('/api/history');
+        if (!response.ok) {
+            throw new Error('Помилка сервера при завантаженні графіків');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Не вдалося завантажити графіки:", error);
+        // Запобіжник: якщо БД недоступна, повертаємо порожні масиви, щоб графіки не впали
+        return { labels: [], temperature: [], humidity: [], soilMoisture: [], light: [] };
+    }
+}
 
 function themedScales(theme, yLabel, yMax, extra = {}) {
     const yScale = {
@@ -241,7 +255,8 @@ function bindOverlayToggle() {
 export async function initCharts() {
     if (typeof Chart === 'undefined') return;
 
-    historyData = await loadMockHistory();
+    // ЗМІНЕНО: Тепер ми чекаємо дані з бази, а не з моку
+    historyData = await loadRealHistory();
 
     if (!charts.temperature) {
         charts.temperature = createSingleChart(CHART_IDS.temp, 'temperature', historyData.temperature);
