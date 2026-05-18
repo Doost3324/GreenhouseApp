@@ -11,8 +11,51 @@ DB_CONFIG = {
      "user": "postgres",
      "password": "postgres", 
      "host": "localhost",
-     "port": "5432"
+     "port": "5433"
 }
+
+# КРОК 1: Спочатку оголошуємо функцію з'єднання
+def get_db_connection():
+     """Допоміжна функція для створення з'єднання з БД"""
+     return psycopg2.connect(**DB_CONFIG)
+
+# КРОК 2: Потім оголошуємо функцію ініціалізації
+def init_db():
+    """Створює необхідні таблиці в БД, якщо вони ще не існують"""
+    init_sql = """
+    CREATE TABLE IF NOT EXISTS sensor_data (
+        id SERIAL PRIMARY KEY,
+        sensor_name VARCHAR(50) NOT NULL,
+        value NUMERIC(10, 2) NOT NULL,
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_sensor_data_lookup ON sensor_data (sensor_name, timestamp DESC);
+
+    CREATE TABLE IF NOT EXISTS device_commands (
+        id SERIAL PRIMARY KEY,
+        device_name VARCHAR(50) NOT NULL,
+        state VARCHAR(50) NOT NULL,
+        timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(init_sql)
+        conn.commit()
+        print("Базу даних успішно перевірено/ініціалізовано.")
+    except Exception as e:
+        print(f"Помилка ініціалізації бази даних: {e}")
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+# КРОК 3: І тільки тепер запускаємо її!
+init_db()
+
+# ... далі йдуть твої маршрути @app.route ...
 
 def get_db_connection():
      """Допоміжна функція для створення з'єднання з БД"""
@@ -133,7 +176,7 @@ def send_command():
              conn.close()
 
 
-# 3. Блок запуску локального сервера (взято з другого коду)
+# 3. Блок запуску локального сервера
 if __name__ == '__main__':
     # Сервер запуститься на порті 5000 і буде доступний для ESP32 в одній мережі Wi-Fi
     app.run(host='0.0.0.0', port=5000, debug=True)
