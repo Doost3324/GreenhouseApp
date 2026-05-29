@@ -1,66 +1,238 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="uk" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Greenhouse Panel</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <title>Greenhouse App</title>
+    <link rel="icon" type="image/png" href="greenhouse-svgrepo-com.png">
+    <script>
+        try {
+            if (localStorage.getItem('greenhouse-theme') === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        } catch (e) { /* noop */ }
+    </script>
+    <link rel="stylesheet" href="css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.172.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.172.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
-    <aside class="glass sidebar">
-        <h2><i class="fa-solid fa-leaf"></i> Greenhouse</h2>
-        <div class="plant-list">
-            <div class="plant-item active" onclick="selectPlant('tomato')">Канабіс</div>
-            <div class="plant-item" onclick="selectPlant('cucumber')">Марівана</div>
-            <div class="plant-item" onclick="selectPlant('succulent')">Кокос</div>
-        </div>
-    </aside>
+    <div class="ambient" aria-hidden="true">
+        <span class="ambient__orb ambient__orb--1"></span>
+        <span class="ambient__orb ambient__orb--2"></span>
+        <span class="ambient__orb ambient__orb--3"></span>
+    </div>
 
-    <main class="main-content">
-        <div class="glass viewer-container">
-            <h1 id="current-plant-name">Канабіс</h1>
-            <model-viewer src="plant.glb" auto-rotate camera-controls rotation-per-second="30deg"></model-viewer>
-            <div id="status-badge" class="status-badge">Завантаження даних...</div>
-        </div>
+    <main class="app">
+        <header class="top-bar">
+            <div class="brand">
+                <div class="brand__mark">
+                    <img src="greenhouse-svgrepo-com.png" alt="" class="brand__icon" width="36" height="36">
+                </div>
+                <div class="brand__text">
+                    <span class="brand__name">Greenhouse App</span>
+                    <span class="brand__tagline">Розумна мікроферма</span>
+                </div>
+                <span class="live-pill" id="live-indicator">
+                    <span class="live-pill__dot"></span>
+                    Онлайн
+                </span>
+            </div>
 
-        <div class="metrics-grid">
-            <div class="glass metric-card">
-                <div class="metric-label">Температура</div>
-                <div class="metric-value"><span id="val-temp">--</span>°C</div>
+            <nav class="tab-nav segmented" role="tablist" aria-label="Навігація">
+                <button type="button" class="tab-btn active" data-tab="monitoring" role="tab" aria-selected="true" aria-controls="tab-monitoring">Моніторинг</button>
+                <button type="button" class="tab-btn" data-tab="analytics" role="tab" aria-selected="false" aria-controls="tab-analytics">Аналітика</button>
+            </nav>
+
+            <div class="top-bar__tags">
+                <time id="current-date" class="tag tag-date" datetime=""></time>
+                <span class="tag tag-plant" id="plant-name">Рослина: Сукулент</span>
+                <span class="tag tag-status status-optimal" id="plant-status">Стан: Оптимальні умови</span>
             </div>
-            <div class="glass metric-card">
-                <div class="metric-label">Вологість пов.</div>
-                <div class="metric-value"><span id="val-hum">--</span>%</div>
+        </header>
+
+        <section id="tab-monitoring" class="tab-panel active" role="tabpanel">
+            <div class="dashboard-grid">
+                <div class="greenhouse-panel">
+                    <p class="section-label">Візуалізація теплиці</p>
+                    <div class="greenhouse-container" id="greenhouse-container">
+                        <div class="greenhouse-backdrop" aria-hidden="true"></div>
+                        <div class="greenhouse-stage">
+                            <img src="box.png" alt="" class="greenhouse-box greenhouse-box--back" width="1254" height="1254" aria-hidden="true">
+
+                            <div class="plant-slot" id="plant-slot" aria-label="Рослина в горщику — обертайте мишею">
+                                <p class="plant-hint" aria-hidden="true">⟲ тягніть для обертання</p>
+                                <canvas id="plant-canvas"></canvas>
+                            </div>
+
+                            <div class="fx-layer fx-light" aria-hidden="true"></div>
+                            <div class="fx-layer fx-wind" aria-hidden="true">
+                                <span class="wind-swoosh wind-swoosh--1"></span>
+                                <span class="wind-swoosh wind-swoosh--2"></span>
+                                <span class="wind-swoosh wind-swoosh--3"></span>
+                            </div>
+
+                            <div class="fx-layer fx-water" id="watering-layer" aria-hidden="true">
+                                <div class="sprinkler-head"></div>
+                                <div class="rain-streaks" id="rain-streaks" aria-hidden="true"></div>
+                                <div class="sprinkler-particles" id="sprinkler-particles"></div>
+                                <div class="soil-mist"></div>
+                            </div>
+
+                            <div class="sensor-badge sensor-light" aria-label="Освітлення">
+                                <span class="sensor-emoji" aria-hidden="true">☀️</span>
+                                <span class="sensor-value" id="sensor-light-value">85%</span>
+                                <span class="live-dot" aria-hidden="true"></span>
+                            </div>
+                            <div class="sensor-badge sensor-temp" aria-label="Температура">
+                                <span class="sensor-emoji" aria-hidden="true">🌡️</span>
+                                <span class="sensor-value" id="sensor-temp-value">24°C</span>
+                                <span class="live-dot" aria-hidden="true"></span>
+                            </div>
+                            <div class="sensor-badge sensor-soil" aria-label="Вологість ґрунту">
+                                <span class="sensor-emoji" aria-hidden="true">💧</span>
+                                <span class="sensor-value" id="sensor-soil-value">45%</span>
+                                <span class="live-dot" aria-hidden="true"></span>
+                            </div>
+                            <div class="sensor-badge sensor-air" aria-label="Вологість повітря">
+                                <span class="sensor-emoji" aria-hidden="true">🌫️</span>
+                                <span class="sensor-value" id="sensor-air-value">62%</span>
+                                <span class="live-dot" aria-hidden="true"></span>
+                            </div>
+
+                            <img src="box_lower.png" alt="" class="greenhouse-box greenhouse-box--front" width="1254" height="1254" aria-hidden="true">
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="controls-panel card-elevated">
+                    <p class="section-label">Керування</p>
+                    <h2 class="panel-title panel-title--compact">Системи</h2>
+                    <ul class="controls-list">
+                        <li class="control-item">
+                            <span class="control-icon" aria-hidden="true">💨</span>
+                            <span class="toggle-label">Вентиляція</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-ventilation" data-device="fan" aria-label="Вентиляція">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </li>
+                        <li class="control-item">
+                            <span class="control-icon" aria-hidden="true">💧</span>
+                            <span class="toggle-label">Полив</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-watering" data-device="pump" aria-label="Полив">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </li>
+                        <li class="control-item">
+                            <span class="control-icon" aria-hidden="true">💡</span>
+                            <span class="toggle-label">Освітлення</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-lighting" data-device="light" aria-label="Освітлення">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </li>
+                    </ul>
+                    <p class="controls-hint" id="last-sync">Оновлення: щойно</p>
+                </aside>
+
+                <div class="stats-strip">
+                    <article class="stat-chip card-elevated">
+                        <span class="stat-chip__icon" aria-hidden="true">🌡️</span>
+                        <div class="stat-chip__body">
+                            <span class="stat-chip__label">Температура</span>
+                            <span class="stat-chip__value" id="stat-temp">24°C</span>
+                        </div>
+                    </article>
+                    <article class="stat-chip card-elevated">
+                        <span class="stat-chip__icon" aria-hidden="true">🌫️</span>
+                        <div class="stat-chip__body">
+                            <span class="stat-chip__label">Вологість пов.</span>
+                            <span class="stat-chip__value" id="stat-air-hum">62%</span>
+                        </div>
+                    </article>
+                    <article class="stat-chip card-elevated">
+                        <span class="stat-chip__icon" aria-hidden="true">💧</span>
+                        <div class="stat-chip__body">
+                            <span class="stat-chip__label">Вологість ґрунту</span>
+                            <span class="stat-chip__value" id="stat-soil-hum">45%</span>
+                        </div>
+                    </article>
+                    <article class="stat-chip card-elevated">
+                        <span class="stat-chip__icon" aria-hidden="true">☀️</span>
+                        <div class="stat-chip__body">
+                            <span class="stat-chip__label">Освітленість</span>
+                            <span class="stat-chip__value" id="stat-light">85%</span>
+                        </div>
+                    </article>
+                </div>
             </div>
-            <div class="glass metric-card">
-                <div class="metric-label">Вологість ґрунту</div>
-                <div class="metric-value"><span id="val-soil">--</span>%</div>
+        </section>
+
+        <section id="tab-analytics" class="tab-panel" role="tabpanel" hidden>
+            <div class="analytics-panel card-elevated">
+                <header class="analytics-header">
+                    <p class="section-label">Аналітика</p>
+                    <h2 class="panel-title panel-title--compact">Історія показників</h2>
+                    <p class="analytics-subtitle">Окремі графіки за останні 24 години</p>
+                </header>
+                <div class="analytics-toolbar">
+                    <button type="button" class="btn-chart-mode" id="btn-chart-overlay" aria-pressed="false">
+                        Показати разом (нашарування)
+                    </button>
+                </div>
+                <div class="analytics-split" id="analytics-split">
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">🌡️ Температура</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-temp"></canvas></div>
+                    </article>
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">🌫️ Вологість повітря</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-humidity"></canvas></div>
+                    </article>
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">💧 Вологість ґрунту</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-soil"></canvas></div>
+                    </article>
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">☀️ Освітленість</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-light"></canvas></div>
+                    </article>
+                </div>
+                <div class="analytics-overlay is-hidden" id="analytics-overlay">
+                    <article class="chart-card">
+                        <h3 class="chart-card__title">Усі показники разом</h3>
+                        <div class="chart-card__canvas"><canvas id="chart-combined"></canvas></div>
+                    </article>
+                </div>
+                <footer class="analytics-footer">
+                    <button type="button" class="btn-download" id="btn-download-report">
+                        <span class="btn-download__icon" aria-hidden="true">📄</span>
+                        Завантажити звіт (PDF)
+                    </button>
+                </footer>
             </div>
-        </div>
+        </section>
+
+        <footer class="app-footer">
+            <span>Greenhouse v1.0</span>
+            <span class="app-footer__sep">·</span>
+            <span id="footer-clock"></span>
+            <span class="app-footer__sep">·</span>
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-pressed="false"></button>
+        </footer>
     </main>
 
-    <aside class="glass controls-panel">
-        <h2>Керування</h2>
-        <p class="subtitle">Сектор А</p>
-        
-        <div class="controls-grid">
-            <button class="control-btn" id="btn-fan" onclick="toggleDevice('fan')">
-                <i class="fa-solid fa-fan"></i>
-                <span>Вентиляція</span>
-            </button>
-            <button class="control-btn" id="btn-pump" onclick="toggleDevice('pump')">
-                <i class="fa-solid fa-droplet"></i>
-                <span>Полив</span>
-            </button>
-            <button class="control-btn" id="btn-light" onclick="toggleDevice('light')">
-                <i class="fa-solid fa-lightbulb"></i>
-                <span>Освітлення</span>
-            </button>
-        </div>
-    </aside>
-
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
